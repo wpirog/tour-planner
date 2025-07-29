@@ -6,27 +6,35 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     body {
-      background:beige; 
+      background:lightseagreen; 
       display:flex;
+      padding:10px;
     }
     #map {
-      margin:5px;
-      height:100vh; 
-      width:80%;}
-    #panel {
-      text-align:center;
-      padding:5px;
-      background:white;
-      width:20%;
-      box-sizing:border-box;
-      overflow:hidden;
+      height:95vh; 
+      width:100%;
+      border-radius:10px;
     }
-    #name-input {
-      display: block;
-      width: 100%;
-      box-sizing: border-box;
-      margin: 5px 0;
+    #panel {
+      height:95vh;
+      width:20vh;
+      text-align:center;
+      background:white;
+      border-radius:10px;
+    }
+    .name-input {
+      width: 80%;
+      box-sizing:border-box;
       border-radius: 5px;
+      margin-bottom: 5px;
+    }
+    #add-button {
+      width: 80%;
+      box-sizing:border-box;
+      border-radius: 5px;
+    }
+    .pin-item {
+      /* display:flex; */
     }
     
   </style>
@@ -38,8 +46,8 @@
     <h3>Wybrana lokalizacja</h3>
     <div id="current-pin-item">
       <p id="coords">Lat: --, Lng: --</p>
-      <input type="text" id="name-input" placeholder="Nazwa pinezki">
-      <button id="save-pin">Dodaj do listy</button>
+      <input type="text" class="name-input" id="c_name-input" placeholder="Nazwa pinezki">
+      <button id="add-button">Dodaj do listy</button>
     </div>
 
     <h3>Pinezki</h3>
@@ -51,57 +59,38 @@
   <script> 
 
     // map setup
-
     var map = L.map('map', {center: [50.4, 19.56], zoom: 12});
-
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
 
-
-    // click handler
-
+    // init var
     var current_pin = null;
+    var pins = [];
 
+    // click on map
+    map.on('click', onClick)
     function onClick(l) {
       if (current_pin) {current_pin.remove()}
       current_pin = L.marker([l.latlng.lat, l.latlng.lng]).addTo(map);
-      updateCurrentPinPanel(l.latlng.lat, l.latlng.lng);
-    }
-    map.on('click', onClick)
-
-    function updateCurrentPinPanel(lat, lng) {
-      document.getElementById("coords").textContent = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
-      document.getElementById("name-input").value = ""; // czyścimy nazwę
-      document.getElementById("pin-item").classList.remove("hidden");
+      document.getElementById("coords").textContent = `Lat: ${l.latlng.lat.toFixed(3)}, Lng: ${l.latlng.lng.toFixed(3)}`;
+      document.getElementById("c_name-input").value = "";
     }
 
-    document.getElementById("save-pin").addEventListener("click", function() {
+    // save pin
+    document.getElementById("add-button").addEventListener("click", function() {
       saveCurrentPin();
     });
-
-
-    // add to pins list
-
-    var pins = [];
-
-    // OD CZATA NA SZYBKO
-    // zapisanie aktualnej pinezki do listy
     function saveCurrentPin() {
       if (!current_pin) return;
-
-      var name = document.getElementById("name-input").value || "Nowa pinezka";
+      var name = document.getElementById("c_name-input").value || "Nowa pinezka";
       pins.push({ marker: current_pin, name: name });
-
-      updatePinsList();
-
-      // czyścimy panel wybranej lokalizacji
-      document.getElementById("pin-item").innerHTML = "";
+      current_pin.setOpacity(0.5).addTo(map).bindTooltip(namex);
       current_pin = null;
+      updatePinsList();
     }
 
-    // odświeżanie listy pinezek
     function updatePinsList() {
       var listDiv = document.getElementById("pins-list");
       listDiv.innerHTML = "";
@@ -109,26 +98,28 @@
         var div = document.createElement("div");
         div.className = "pin-item";
         div.innerHTML = `
-          <input type="text" value="${pin.name}" onchange="renamePin(${index}, this.value)">
+          <p> ${index + 1}. ${pin.name}</p>
           <button onclick="removePin(${index})">Usuń</button>
         `;
         listDiv.appendChild(div);
       });
+      // drawPins();
     }
-
-    function renamePin(index, newName) {
-      pins[index].name = newName;
-      pins[index].marker.bindPopup(newName);
-    }
-
     function removePin(index) {
       map.removeLayer(pins[index].marker);
       pins.splice(index, 1);
       updatePinsList();
     }
 
-    
-  
+    // function drawPins() {
+
+    //   pins.forEach((pin, index) => {
+    //     pin.setOpacity(0.5).addTo(map);
+
+    //   });
+    // }
+
+
   </script>
 </body>
 
