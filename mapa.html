@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mapa</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    body {
+      background:beige; 
+      display:flex;
+    }
+    #map {
+      margin:5px;
+      height:100vh; 
+      width:80%;}
+    #panel {
+      text-align:center;
+      padding:5px;
+      background:white;
+      width:20%;
+      box-sizing:border-box;
+      overflow:hidden;
+    }
+    #name-input {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 5px 0;
+      border-radius: 5px;
+    }
+    
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="panel">
+
+    <h3>Wybrana lokalizacja</h3>
+    <div id="current-pin-item">
+      <p id="coords">Lat: --, Lng: --</p>
+      <input type="text" id="name-input" placeholder="Nazwa pinezki">
+      <button id="save-pin">Dodaj do listy</button>
+    </div>
+
+    <h3>Pinezki</h3>
+    <div id="pins-list"></div>
+
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script> 
+
+    // map setup
+
+    var map = L.map('map', {center: [50.4, 19.56], zoom: 12});
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+
+    // click handler
+
+    var current_pin = null;
+
+    function onClick(l) {
+      if (current_pin) {current_pin.remove()}
+      current_pin = L.marker([l.latlng.lat, l.latlng.lng]).addTo(map);
+      updateCurrentPinPanel(l.latlng.lat, l.latlng.lng);
+    }
+    map.on('click', onClick)
+
+    function updateCurrentPinPanel(lat, lng) {
+      document.getElementById("coords").textContent = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
+      document.getElementById("name-input").value = ""; // czyścimy nazwę
+      document.getElementById("pin-item").classList.remove("hidden");
+    }
+
+    document.getElementById("save-pin").addEventListener("click", function() {
+      saveCurrentPin();
+    });
+
+
+    // add to pins list
+
+    var pins = [];
+
+    // OD CZATA NA SZYBKO
+    // zapisanie aktualnej pinezki do listy
+    function saveCurrentPin() {
+      if (!current_pin) return;
+
+      var name = document.getElementById("name-input").value || "Nowa pinezka";
+      pins.push({ marker: current_pin, name: name });
+
+      updatePinsList();
+
+      // czyścimy panel wybranej lokalizacji
+      document.getElementById("pin-item").innerHTML = "";
+      current_pin = null;
+    }
+
+    // odświeżanie listy pinezek
+    function updatePinsList() {
+      var listDiv = document.getElementById("pins-list");
+      listDiv.innerHTML = "";
+      pins.forEach((pin, index) => {
+        var div = document.createElement("div");
+        div.className = "pin-item";
+        div.innerHTML = `
+          <input type="text" value="${pin.name}" onchange="renamePin(${index}, this.value)">
+          <button onclick="removePin(${index})">Usuń</button>
+        `;
+        listDiv.appendChild(div);
+      });
+    }
+
+    function renamePin(index, newName) {
+      pins[index].name = newName;
+      pins[index].marker.bindPopup(newName);
+    }
+
+    function removePin(index) {
+      map.removeLayer(pins[index].marker);
+      pins.splice(index, 1);
+      updatePinsList();
+    }
+
+    
+  
+  </script>
+</body>
+
+</html>
