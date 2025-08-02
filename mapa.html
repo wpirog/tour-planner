@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <title>Mapa</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
   <style>
     body {
       background:lightseagreen; 
@@ -34,9 +36,31 @@
       border-radius: 5px;
     }
     .pin-item {
-      /* display:flex; */
+      display:flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 5px;
     }
-    
+    .del-button {
+      height:20px;
+      width:20px;
+      text-align: center;
+      background-color: pink;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #routing-item {
+
+    }
+    .select {
+
+    }
+    #route_calc-button {
+      width: 80%;
+      box-sizing:border-box;
+      border-radius: 5px;
+    }
+
   </style>
 </head>
 <body>
@@ -49,13 +73,21 @@
       <input type="text" class="name-input" id="c_name-input" placeholder="Nazwa pinezki">
       <button id="add-button">Dodaj do listy</button>
     </div>
-
     <h3>Pinezki</h3>
     <div id="pins-list"></div>
-
+    <div id="routing-item">
+      <h3>Wyznaczanie trasy</h3>
+      <label for="sel-start">Początek:</label>
+      <select class=select id="sel-start"></select>
+      <label for="sel-end">Koniec:</label>
+      <select class=select id="sel-end"></select>
+      <button id="route_calc-button">Oblicz trasę</button>
+      
+    </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
   <script> 
 
     // map setup
@@ -86,39 +118,59 @@
       if (!current_pin) return;
       var name = document.getElementById("c_name-input").value || "Nowa pinezka";
       pins.push({ marker: current_pin, name: name });
-      current_pin.setOpacity(0.5).addTo(map).bindTooltip(namex);
+      current_pin.setOpacity(0.5).addTo(map).bindTooltip(name);
       current_pin = null;
       updatePinsList();
     }
-
     function updatePinsList() {
       var listDiv = document.getElementById("pins-list");
+      var startDiv = document.getElementById("sel-start");
+      var endDiv = document.getElementById("sel-end");
       listDiv.innerHTML = "";
+      startDiv.innerHTML = "";
+      endDiv.innerHTML = "";
       pins.forEach((pin, index) => {
         var div = document.createElement("div");
         div.className = "pin-item";
         div.innerHTML = `
-          <p> ${index + 1}. ${pin.name}</p>
-          <button onclick="removePin(${index})">Usuń</button>
+          <span>${index + 1}. ${pin.name}</span>
+          <button class="del-button" onclick="removePin(${index})">X</button>
         `;
         listDiv.appendChild(div);
+        var div = document.createElement("div");
+        div.innerHTML = `
+          <option value=${pin.name}>${pin.name}</option>
+        `;
+        startDiv.appendChild(div);
+        endDiv.appendChild(div);
+        
       });
-      // drawPins();
     }
     function removePin(index) {
       map.removeLayer(pins[index].marker);
       pins.splice(index, 1);
       updatePinsList();
     }
+    
+    let routeControl = null;
 
-    // function drawPins() {
+    function drawRoute(fromLatLng, toLatLng) {
+      if (routeControl) {
+        map.removeControl(routeControl);
+      }
 
-    //   pins.forEach((pin, index) => {
-    //     pin.setOpacity(0.5).addTo(map);
-
-    //   });
-    // }
-
+      routeControl = L.Routing.control({
+        waypoints: [
+          L.latLng(fromLatLng.lat, fromLatLng.lng),
+          L.latLng(toLatLng.lat, toLatLng.lng)
+        ],
+        routeWhileDragging: false,
+        show: false,
+        addWaypoints: false,
+        draggableWaypoints: false,
+        createMarker: () => null // ukrywa markery tras
+      }).addTo(map);
+    }
 
   </script>
 </body>

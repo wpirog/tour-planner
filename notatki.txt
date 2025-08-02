@@ -1,0 +1,5 @@
+- dodać zmiane nazwy po kliknięciu na nazwe
+- naprawić zawijanie długicj nazw
+- wycentrować X w del-button
+- dodanie pinezki na dwukliku??
+- naprawić poczatek koniec (CSS)
